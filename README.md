@@ -75,6 +75,43 @@ myfunc = cmd2func(
 myfunc(1, 1)  # will print '2' and verbose information
 ```
 
+Not print the command:
+
+```Python
+myfunc = cmd2func(
+    "python -c 'print({a} + {b})'",
+    print_cmd=False
+)
+
+myfunc(1, 2)  # will print '3'
+```
+
+Capture stdout / stderr:
+
+```Python
+myfunc = cmd2func(
+    "python -c 'print({a} + {b})'",
+    capture_stdout=True,
+)
+
+myfunc(1, 2)  # will print '3'
+assert myfunc.stdout.strip() == '3'
+```
+
+Not print the stdout / stderr:
+
+```Python
+myfunc = cmd2func(
+    "python -c 'print({a} + {b})'",
+    capture_stdout=True,
+    print_stdout=False,
+)
+
+myfunc(1, 2)  # will print nothing
+assert myfunc.stdout.strip() == '3'
+```
+
+
 ## Credits
 
 This package was created with Cookiecutter and the `Nanguage/cookiecutter-pypackage` project template.

@@ -55,6 +55,22 @@ class cmd2func(object):
         self.capture_stderr = capture_stderr
         self.print_stdout = print_stdout
         self.print_stderr = print_stderr
+        self._stdout_content: T.List[str] = []
+        self._stderr_content: T.List[str] = []
+
+    @property
+    def stdout(self) -> T.Optional[str]:
+        if self.capture_stdout:
+            return "".join(self._stdout_content)
+        else:
+            return None
+
+    @property
+    def stderr(self) -> T.Optional[str]:
+        if self.capture_stderr:
+            return "".join(self._stderr_content)
+        else:
+            return None
 
     def __call__(self, *args, **kwargs) -> int:
         vals = self.desc.parse_pass_in(args, kwargs)
@@ -69,13 +85,18 @@ class cmd2func(object):
         while True:
             try:
                 src, line = next(g)
-                if self.print_stdout and (src == 'stdout'):
-                    print(line.rstrip("\n"))
-                elif self.print_stderr:
-                    print(line.rstrip("\n"), file=sys.stderr)
+                if src == 'stdout':
+                    if self.print_stdout:
+                        print(line.rstrip("\n"))
+                    if self.capture_stdout:
+                        self._stdout_content.append(line)
+                else:
+                    if self.print_stderr:
+                        print(line.rstrip("\n"), file=sys.stderr)
+                    if self.capture_stderr:
+                        self._stderr_content.append(line)
             except StopIteration as e:
                 retcode = e.value
                 break
         return retcode
-
 

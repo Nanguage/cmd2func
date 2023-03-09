@@ -69,3 +69,40 @@ def test_command():
         cmd.format({"a": 1})
     with pytest.raises(ValueError):
         cmd.check_placeholder(["a", "b", "c"])
+
+
+def test_no_print_cmd():
+    func = cmd2func(
+        "python -c 'print({a} + {b})'",
+        print_cmd=False,
+    )
+    assert func(1, 2) == 0
+    assert func.stdout is None
+    assert func.stderr is None
+
+
+def test_no_print_stdout():
+    func = cmd2func(
+        "python -c 'print({a} + {b})'",
+        print_stdout=False,
+        print_stderr=False,
+    )
+    assert func(1, 2) == 0
+
+
+def test_capture_stdout():
+    func = cmd2func(
+        "python -c 'print({a} + {b})'",
+        capture_stdout=True,
+    )
+    assert func(1, 2) == 0
+    assert func.stdout.strip() == "3"
+
+
+def test_capture_stderr():
+    func = cmd2func(
+        "python -c 'raise IOError(\"test\")'",
+        capture_stderr=True,
+    )
+    assert func(1, 2) > 0
+    assert len(func.stderr) > 0
