@@ -87,7 +87,7 @@ myfunc = cmd2func(
     }
 )
 
-myfunc(1, 1)  # will print '2' and verbose information
+myfunc(1, 1, True)  # will print '2' and verbose information
 ```
 
 Not print the command:
