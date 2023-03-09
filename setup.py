@@ -58,6 +58,7 @@ setup(
     version=get_version(),
     zip_safe=False,
     extras_require={
-        'test': requires_test,'dev': requires_dev,
+        'test': requires_test,
+        'dev': requires_dev,
     }
 )
