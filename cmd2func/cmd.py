@@ -42,6 +42,7 @@ class Command(object):
         config: CLIConfig = {
             "name": self.main_command,
             "inputs": args,
+            "inputs_order": self.placeholders,
         }
         return config
 
@@ -49,12 +50,13 @@ class Command(object):
         """Complete the config from the command template."""
         if 'name' not in config:
             config["name"] = self.main_command
+        if 'inputs_order' not in config:
+            config["inputs_order"] = self.placeholders
         args = config['inputs']
         for ph in self.placeholders:
             if ph not in args:
                 arg: ArgDef = {
                     "type": "str",
-                    "default": None,
                 }
                 args[ph] = arg
         return config

@@ -1,5 +1,6 @@
 import pytest
 from cmd2func import cmd2func
+from cmd2func.cmd import Command
 
 
 def test_cmd2func():
@@ -14,7 +15,7 @@ def test_cmd2func():
     assert func2() > 0
 
     func3 = cmd2func(
-        "python -c 'print({a} + {b})'",
+        "python -c 'print({a} + {b} + {c})'",
         config={
             "inputs": {
                 "a": {
@@ -27,4 +28,44 @@ def test_cmd2func():
             }
         }
     )
-    assert func3(1) == 0
+    assert func3(1, c=10) == 0
+    with pytest.raises(TypeError):
+        func3(1)
+
+    func4 = cmd2func(
+        "python {verbose} -c 'print({a} + {b})'",
+        config={
+            "inputs": {
+                "verbose": {
+                    "type": "bool",
+                    "true_insert": "-v",
+                    "false_insert": "",
+                }
+            },
+            "inputs_order": ["a", "b", "verbose"]
+        }
+    )
+    assert func4(1, 2, verbose=True) == 0
+    assert func4(1, 2, verbose=False) == 0
+
+
+def test_cmd2func_2():
+    func5 = cmd2func(
+        "python -c 'print({a} + {b})'",
+        config={
+            "inputs": {
+                "c": {
+                    "type": "int",
+                }
+            }
+        }
+    )
+    assert func5(1, 2) == 0
+
+
+def test_command():
+    cmd = Command("python -c 'print({a} + {b})'")
+    with pytest.raises(ValueError):
+        cmd.format({"a": 1})
+    with pytest.raises(ValueError):
+        cmd.check_placeholder(["a", "b", "c"])

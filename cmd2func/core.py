@@ -36,7 +36,11 @@ class cmd2func(object):
     def __init__(
             self, command: str,
             config: T.Optional[CLIConfig] = None,
-            print_cmd=True):
+            print_cmd=True,
+            capture_stdout=False,
+            capture_stderr=False,
+            print_stdout=True,
+            print_stderr=True):
         self.command = Command(command)
         if config is None:
             config = self.command.infer_config()
@@ -47,6 +51,10 @@ class cmd2func(object):
         self.command.check_placeholder([v.name for v in self.desc.inputs])
         self.__signature__ = compose_signature(self.desc)
         self.is_print_cmd = print_cmd
+        self.capture_stdout = capture_stdout
+        self.capture_stderr = capture_stderr
+        self.print_stdout = print_stdout
+        self.print_stderr = print_stderr
 
     def __call__(self, *args, **kwargs) -> int:
         vals = self.desc.parse_pass_in(args, kwargs)
@@ -61,9 +69,9 @@ class cmd2func(object):
         while True:
             try:
                 src, line = next(g)
-                if src == 'stdout':
+                if self.print_stdout and (src == 'stdout'):
                     print(line.rstrip("\n"))
-                else:
+                elif self.print_stderr:
                     print(line.rstrip("\n"), file=sys.stderr)
             except StopIteration as e:
                 retcode = e.value
