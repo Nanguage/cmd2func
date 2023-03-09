@@ -20,6 +20,9 @@ def get_version():
 
 def get_install_requirements():
     requirements = [
+        "typing_extensions",
+        "funcdesc",
+        "pyYAML",
     ]
     return requirements
 

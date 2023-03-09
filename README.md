@@ -26,6 +26,18 @@
 
 * TODO
 
+Convert command line to a callable object:
+
+```Python
+from cmd2func import cmd2func
+
+myfunc = cmd2func(
+  "python -c 'print({a} + {b})'",
+)
+
+myfunc(1, 2)  # will print '3'
+```
+
 ## Credits
 
 This package was created with Cookiecutter and the `Nanguage/cookiecuter-pypackage` project template.
