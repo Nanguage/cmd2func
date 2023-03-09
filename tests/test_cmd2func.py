@@ -63,6 +63,20 @@ def test_cmd2func_2():
     assert func5(1, 2) == 0
 
 
+def test_type():
+    func = cmd2func(
+        "python -c 'print({a} + {b})'",
+        config={
+            "inputs": {
+                "a": {
+                    "type": "int",
+                },
+            }
+        }
+    )
+    assert func.desc.inputs[0].type is int
+
+
 def test_command():
     cmd = Command("python -c 'print({a} + {b})'")
     with pytest.raises(ValueError):

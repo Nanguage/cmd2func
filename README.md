@@ -19,10 +19,25 @@
 </p>
 </div>
 
-**Work In Progress**
+cmd2func is a Python package that allows you to convert command line into Python functions. With cmd2func, you can easily convert common shell commands into Python functions, which can be called in your Python program, making your Python code more flexible and portable.
+
+cmd2func also supports capturing the stdout and stderr of the command line, allowing you to handle command line output easily in Python.
 
 
 ## Features
+
++ Converts command line into Python functions, making your Python program more flexible and portable.
++ Supports capturing the stdout and stderr of the command line, allowing you to handle command line output easily in Python.
++ Has a simple API, easy to use and integrate into your Python projects.
++ Tested for different operating systems, ensuring that it works well in various environments.
+
+## Installation
+
+```bash
+$ pip install cmd2func
+```
+
+## Usage examples
 
 Convert command line to a callable object:
 
@@ -110,7 +125,6 @@ myfunc = cmd2func(
 myfunc(1, 2)  # will print nothing
 assert myfunc.stdout.strip() == '3'
 ```
-
 
 ## Credits
 

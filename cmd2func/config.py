@@ -31,7 +31,7 @@ def extrace_key(d: dict, key, default) -> T.Any:
 
 def config_to_desc(config: CLIConfig) -> Description:
     """Convert a config to a funcdesc's Description object."""
-    args_conf = config['inputs']
+    args_conf = config['inputs'].copy()
     order = config.get('inputs_order', list(args_conf.keys()))
     args = [args_conf.pop(n) for n in order]
     inputs = []
@@ -40,7 +40,7 @@ def config_to_desc(config: CLIConfig) -> Description:
         _tp = extrace_key(pc, 'type', None)
         _default = extrace_key(pc, 'default', NotDef)
         val = Value(
-            type=eval(_tp),
+            type_=eval(_tp),
             default=_default,
             name=n,
             **pc
