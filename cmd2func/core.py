@@ -99,4 +99,3 @@ class cmd2func(object):
                 retcode = e.value
                 break
         return retcode
-
