@@ -41,7 +41,6 @@ def config_to_desc(config: CLIConfig) -> Description:
         _default = extrace_key(pc, 'default', NotDef)
         val = Value(
             type=eval(_tp),
-            range=None,
             default=_default,
             name=n,
             **pc
