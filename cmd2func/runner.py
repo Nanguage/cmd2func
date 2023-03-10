@@ -46,3 +46,21 @@ class ProcessRunner(object):
                 line_decoded = line.decode()
                 yield src, line_decoded
         return self.proc.wait()
+
+    def write_stream_until_stop(
+            self,
+            out_file: T.TextIO,
+            err_file: T.TextIO) -> int:
+        g = self.stream()
+        retcode = None
+        while True:
+            try:
+                src, line = next(g)
+                if src == 'stdout':
+                    out_file.write(line)
+                else:
+                    err_file.write(line)
+            except StopIteration as e:
+                retcode = e.value
+                break
+        return retcode

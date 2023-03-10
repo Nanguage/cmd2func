@@ -1,3 +1,5 @@
+import io
+
 import pytest
 from cmd2func import cmd2func
 from cmd2func.cmd import Command
@@ -85,38 +87,23 @@ def test_command():
         cmd.check_placeholder(["a", "b", "c"])
 
 
-def test_no_print_cmd():
-    func = cmd2func(
-        "python -c 'print({a} + {b})'",
-        print_cmd=False,
-    )
-    assert func(1, 2) == 0
-    assert func.stdout is None
-    assert func.stderr is None
-
-
-def test_no_print_stdout():
-    func = cmd2func(
-        "python -c 'print({a} + {b})'",
-        print_stdout=False,
-        print_stderr=False,
-    )
-    assert func(1, 2) == 0
-
-
 def test_capture_stdout():
+    out = io.StringIO()
     func = cmd2func(
         "python -c 'print({a} + {b})'",
-        capture_stdout=True,
+        out_stream=out,
     )
     assert func(1, 2) == 0
-    assert func.stdout.strip() == "3"
+    out.seek(0)
+    assert out.read().strip() == "3"
 
 
 def test_capture_stderr():
+    err = io.StringIO()
     func = cmd2func(
         "python -c 'raise IOError(\"test\")'",
-        capture_stderr=True,
+        err_stream=err,
     )
     assert func(1, 2) > 0
-    assert len(func.stderr) > 0
+    err.seek(0)
+    assert len(err.read().strip()) > 0

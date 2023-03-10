@@ -101,34 +101,32 @@ myfunc = cmd2func(
 myfunc(1, 2)  # will print '3'
 ```
 
-Capture stdout / stderr:
+You can specify a file object to `out_stream` or `err_stream` to capture the `stdout` / `stderr` with cmd2func:
 
 ```Python
+from io import StringIO
+
+buffer = StringIO()
+
 myfunc = cmd2func(
     "python -c 'print({a} + {b})'",
-    capture_stdout=True,
+    out_stream=buffer,
 )
 
-myfunc(1, 2)  # will print '3'
-assert myfunc.stdout.strip() == '3'
+myfunc(1, 2)
+assert buffer.getvalue().strip() == '3'
 ```
 
-Not print the stdout / stderr:
+If you want to output to the command line and capture `stdout` / `stderr` at the same time, you can use the `Tee` object provided by cmd2func:
 
 ```Python
-myfunc = cmd2func(
-    "python -c 'print({a} + {b})'",
-    capture_stdout=True,
-    print_stdout=False,
-)
+from io import StringIO
+import sys
+from cmd2func.utils import Tee
 
-myfunc(1, 2)  # will print nothing
-assert myfunc.stdout.strip() == '3'
+out = StringIO()
+t = Tee(sys.stdout, out)
+func = cmd2func("python -c 'print({a} + {b})'", out_stream=t)
+func(1, 2)  # will print "3"
+assert out.getvalue().strip() == "3"
 ```
-
-## Credits
-
-This package was created with Cookiecutter and the `Nanguage/cookiecutter-pypackage` project template.
-
-+ Cookiecutter: https://github.com/audreyr/cookiecutter
-+ `Nanguage/cookiecutter-pypackage`: https://github.com/Nanguage/cookiecutter-pypackage

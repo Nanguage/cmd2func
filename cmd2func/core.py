@@ -37,10 +37,8 @@ class cmd2func(object):
             self, command: str,
             config: T.Optional[CLIConfig] = None,
             print_cmd=True,
-            capture_stdout=False,
-            capture_stderr=False,
-            print_stdout=True,
-            print_stderr=True):
+            out_stream=sys.stdout,
+            err_stream=sys.stderr,):
         self.command = Command(command)
         if config is None:
             config = self.command.infer_config()
@@ -51,51 +49,26 @@ class cmd2func(object):
         self.command.check_placeholder([v.name for v in self.desc.inputs])
         self.__signature__ = compose_signature(self.desc)
         self.is_print_cmd = print_cmd
-        self.capture_stdout = capture_stdout
-        self.capture_stderr = capture_stderr
-        self.print_stdout = print_stdout
-        self.print_stderr = print_stderr
-        self._stdout_content: T.List[str] = []
-        self._stderr_content: T.List[str] = []
+        self.out_stream = out_stream
+        self.err_stream = err_stream
 
-    @property
-    def stdout(self) -> T.Optional[str]:
-        if self.capture_stdout:
-            return "".join(self._stdout_content)
-        else:
-            return None
+    def run_cmd(self, cmd_str: str) -> int:
+        """Run the command and return the return code."""
+        runner = ProcessRunner(cmd_str)
+        runner.run()
+        ret_code = runner.write_stream_until_stop(
+            self.out_stream, self.err_stream)
+        return ret_code
 
-    @property
-    def stderr(self) -> T.Optional[str]:
-        if self.capture_stderr:
-            return "".join(self._stderr_content)
-        else:
-            return None
-
-    def __call__(self, *args, **kwargs) -> int:
+    def get_cmd_str(self, *args, **kwargs) -> str:
+        """Get the command string from the arguments."""
         vals = self.desc.parse_pass_in(args, kwargs)
         vals = replace_vals(vals, self.desc)
         cmd_str = self.command.format(vals)
+        return cmd_str
+
+    def __call__(self, *args, **kwargs) -> int:
+        cmd_str = self.get_cmd_str(*args, **kwargs)
         if self.is_print_cmd:
             print(f"Run command: {cmd_str}")
-        runner = ProcessRunner(cmd_str)
-        runner.run()
-        g = runner.stream()
-        retcode = None
-        while True:
-            try:
-                src, line = next(g)
-                if src == 'stdout':
-                    if self.print_stdout:
-                        print(line.rstrip("\n"))
-                    if self.capture_stdout:
-                        self._stdout_content.append(line)
-                else:
-                    if self.print_stderr:
-                        print(line.rstrip("\n"), file=sys.stderr)
-                    if self.capture_stderr:
-                        self._stderr_content.append(line)
-            except StopIteration as e:
-                retcode = e.value
-                break
-        return retcode
+        return self.run_cmd(cmd_str)
