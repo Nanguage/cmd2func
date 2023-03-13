@@ -39,7 +39,14 @@ $ pip install cmd2func
 
 ## Usage examples
 
-Convert command line to a callable object:
+### Basic usage
+
+There are two ways to use `cmd2func`:
+
+1. Passing the a command line template string.
+2. Use `cmd2func` as a decorator to decorate a function that returns a command line string.
+
+#### Use command line template string
 
 ```Python
 from cmd2func import cmd2func
@@ -51,6 +58,24 @@ myfunc = cmd2func(
 ret_code = myfunc(1, 2)  # will print '3'
 print(ret_code)  # will print '0'
 ```
+
+#### Use `cmd2func` as a decorator
+
+`cmd2func` can also be used as a decorator to decorate a function that returns a command line string:
+
+```Python
+from cmd2func import cmd2func
+
+@cmd2func
+def print_sum(a, b):
+    return f"python -c 'print({a} + {b})'"
+
+print_sum(1, 2)  # will print '3'
+```
+
+### Advanced usage
+
+#### Settings for template string
 
 Add default value to argument:
 
@@ -90,6 +115,8 @@ myfunc = cmd2func(
 myfunc(1, 1, True)  # will print '2' and verbose information
 ```
 
+#### Settings for print command line
+
 Not print the command:
 
 ```Python
@@ -100,6 +127,8 @@ myfunc = cmd2func(
 
 myfunc(1, 2)  # will print '3'
 ```
+
+#### Capture `stdout` / `stderr`
 
 You can specify a file object to `out_stream` or `err_stream` to capture the `stdout` / `stderr` with cmd2func:
 

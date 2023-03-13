@@ -21,8 +21,8 @@ def get_version():
 
 def get_install_requirements():
     requirements = [
+        "funcdesc>=0.1.2",
         "typing_extensions",
-        "funcdesc",
         "pyYAML",
     ]
     return requirements

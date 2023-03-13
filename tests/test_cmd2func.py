@@ -76,7 +76,7 @@ def test_type():
             }
         }
     )
-    assert func.desc.inputs[0].type is int
+    assert func.formater.desc.inputs[0].type is int
 
 
 def test_command():
@@ -107,3 +107,19 @@ def test_capture_stderr():
     assert func(1, 2) > 0
     err.seek(0)
     assert len(err.read().strip()) > 0
+
+
+def test_as_decorator():
+    @cmd2func
+    def sum_command(a, b):
+        return f'python -c "print({a} + {b})"'
+
+    assert sum_command(1, 2) == 0
+
+    out = io.StringIO()
+    @cmd2func(out_stream=out)
+    def sum_command(a, b):
+        return f'python -c "print({a} + {b})"'
+
+    assert sum_command(1, 2) == 0
+    assert out.getvalue().strip() == "3"

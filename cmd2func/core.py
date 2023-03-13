@@ -1,6 +1,7 @@
 import inspect
 import sys
 import typing as T
+import functools
 
 from funcdesc import Description
 
@@ -32,13 +33,11 @@ def replace_vals(vals: dict, desc: Description) -> dict:
     return vals
 
 
-class cmd2func(object):
+class CommandFormater(object):
     def __init__(
             self, command: str,
             config: T.Optional[CLIConfig] = None,
-            print_cmd=True,
-            out_stream=sys.stdout,
-            err_stream=sys.stderr,):
+            ) -> None:
         self.command = Command(command)
         if config is None:
             config = self.command.infer_config()
@@ -47,7 +46,34 @@ class cmd2func(object):
         self.config = config
         self.desc = config_to_desc(config)
         self.command.check_placeholder([v.name for v in self.desc.inputs])
-        self.__signature__ = compose_signature(self.desc)
+        self.signature = compose_signature(self.desc)
+
+    def get_cmd_str(self, *args, **kwargs) -> str:
+        """Get the command string from the arguments."""
+        vals = self.desc.parse_pass_in(args, kwargs)
+        vals = replace_vals(vals, self.desc)
+        cmd_str = self.command.format(vals)
+        return cmd_str
+
+
+StrFunc = T.Callable[..., str]
+
+
+class Cmd2Func(object):
+    def __init__(
+            self, cmd_or_func: T.Union[str, StrFunc],
+            config: T.Optional[CLIConfig] = None,
+            print_cmd=True,
+            out_stream=sys.stdout,
+            err_stream=sys.stderr,):
+        if isinstance(cmd_or_func, str):
+            self.formater = CommandFormater(cmd_or_func, config)
+            self.get_cmd_str = self.formater.get_cmd_str
+            self.__signature__ = self.formater.signature
+        else:
+            self.get_cmd_str = cmd_or_func
+            functools.update_wrapper(self, cmd_or_func)
+
         self.is_print_cmd = print_cmd
         self.out_stream = out_stream
         self.err_stream = err_stream
@@ -60,15 +86,26 @@ class cmd2func(object):
             self.out_stream, self.err_stream)
         return ret_code
 
-    def get_cmd_str(self, *args, **kwargs) -> str:
-        """Get the command string from the arguments."""
-        vals = self.desc.parse_pass_in(args, kwargs)
-        vals = replace_vals(vals, self.desc)
-        cmd_str = self.command.format(vals)
-        return cmd_str
-
     def __call__(self, *args, **kwargs) -> int:
         cmd_str = self.get_cmd_str(*args, **kwargs)
         if self.is_print_cmd:
             print(f"Run command: {cmd_str}")
         return self.run_cmd(cmd_str)
+
+
+def cmd2func(
+        cmd_or_func: T.Union[str, StrFunc, None] = None,
+        config: T.Optional[CLIConfig] = None,
+        print_cmd=True,
+        out_stream=sys.stdout,
+        err_stream=sys.stderr,
+        ) -> Cmd2Func:
+    """Convert a command string to a function."""
+    if cmd_or_func is None:
+        return functools.partial(  # type: ignore
+            cmd2func, config=config, print_cmd=print_cmd,
+            out_stream=out_stream, err_stream=err_stream)
+    else:
+        return Cmd2Func(
+            cmd_or_func, config, print_cmd, out_stream, err_stream
+        )
