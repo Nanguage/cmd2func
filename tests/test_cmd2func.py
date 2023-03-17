@@ -123,3 +123,15 @@ def test_as_decorator():
 
     assert sum_command(1, 2) == 0
     assert out.getvalue().strip() == "3"
+
+
+def test_decorate_genfunc():
+    out = io.StringIO()
+    @cmd2func(out_stream=out)
+    def sum_and_product(a, b):
+        r1 = yield f'python -c "print({a} + {b})"'
+        r2 = yield f'python -c "print({a} * {b})"'
+        return r1 + r2
+
+    assert sum_and_product(1, 2) == 0
+    assert out.getvalue().strip().split() == ["3", "2"]

@@ -41,10 +41,11 @@ $ pip install cmd2func
 
 ### Basic usage
 
-There are two ways to use `cmd2func`:
+There are three ways to use `cmd2func`:
 
 1. Passing the a command line template string.
 2. Use `cmd2func` as a decorator to decorate a function that returns a command line string.
+3. Use `cmd2func` as a decorator to decorate a generator function that yield command line strings.
 
 #### Use command line template string
 
@@ -56,7 +57,7 @@ myfunc = cmd2func(
 )
 
 ret_code = myfunc(1, 2)  # will print '3'
-print(ret_code)  # will print '0'
+assert ret_code == 0
 ```
 
 #### Use `cmd2func` as a decorator
@@ -70,7 +71,26 @@ from cmd2func import cmd2func
 def print_sum(a, b):
     return f"python -c 'print({a} + {b})'"
 
-print_sum(1, 2)  # will print '3'
+ret_code = print_sum(1, 2)  # will print '3'
+assert ret_code == 0
+```
+
+#### Decorate a generator function
+
+`cmd2func` can also be used to decorate a generator function that yield command line strings.
+In this way, you can execute multiple commands in a single function call and control the return value of the function:
+
+```Python
+from cmd2func import cmd2func
+
+@cmd2func
+def print_sum_and_product(a, b):
+    ret_code1 = yield f"python -c 'print({a} + {b})'"
+    ret_code2 = yield f"python -c 'print({a} * {b})'"
+    return ret_code1 + ret_code2
+
+ret_code = print_sum_and_product(2, 3)  # will print '5' and '6'
+assert ret_code == 0
 ```
 
 ### Advanced usage

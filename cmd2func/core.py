@@ -57,15 +57,18 @@ class CommandFormater(object):
 
 
 StrFunc = T.Callable[..., str]
+CmdGen = T.Generator[str, int, T.Any]
+StrGenFunc = T.Callable[..., CmdGen]
 
 
 class Cmd2Func(object):
     def __init__(
-            self, cmd_or_func: T.Union[str, StrFunc],
+            self, cmd_or_func: T.Union[str, StrFunc, StrGenFunc],
             config: T.Optional[CLIConfig] = None,
             print_cmd=True,
             out_stream=sys.stdout,
             err_stream=sys.stderr,):
+        self.get_cmd_str: T.Union[StrFunc, StrGenFunc]
         if isinstance(cmd_or_func, str):
             self.formater = CommandFormater(cmd_or_func, config)
             self.get_cmd_str = self.formater.get_cmd_str
@@ -86,15 +89,28 @@ class Cmd2Func(object):
             self.out_stream, self.err_stream)
         return ret_code
 
-    def __call__(self, *args, **kwargs) -> int:
-        cmd_str = self.get_cmd_str(*args, **kwargs)
-        if self.is_print_cmd:
-            print(f"Run command: {cmd_str}")
-        return self.run_cmd(cmd_str)
+    def iter_and_run(self, generator: CmdGen) -> T.Any:
+        cmd = next(generator)
+        while True:
+            ret_code = self.run_cmd(cmd)
+            try:
+                cmd = generator.send(ret_code)
+            except StopIteration as e:
+                return e.value
+
+    def __call__(self, *args, **kwargs) -> T.Union[int, T.Any]:
+        cmd_or_gen = self.get_cmd_str(*args, **kwargs)
+        if isinstance(cmd_or_gen, str):
+            cmd_str = cmd_or_gen
+            if self.is_print_cmd:
+                print(f"Run command: {cmd_str}")
+            return self.run_cmd(cmd_str)
+        else:
+            return self.iter_and_run(cmd_or_gen)
 
 
 def cmd2func(
-        cmd_or_func: T.Union[str, StrFunc, None] = None,
+        cmd_or_func: T.Union[str, StrFunc, StrGenFunc, None] = None,
         config: T.Optional[CLIConfig] = None,
         print_cmd=True,
         out_stream=sys.stdout,
