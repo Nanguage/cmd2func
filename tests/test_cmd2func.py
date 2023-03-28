@@ -1,4 +1,5 @@
 import io
+import os
 
 import pytest
 from cmd2func import cmd2func
@@ -117,6 +118,7 @@ def test_as_decorator():
     assert sum_command(1, 2) == 0
 
     out = io.StringIO()
+
     @cmd2func(out_stream=out)
     def sum_command(a, b):
         return f'python -c "print({a} + {b})"'
@@ -127,6 +129,7 @@ def test_as_decorator():
 
 def test_decorate_genfunc():
     out = io.StringIO()
+
     @cmd2func(out_stream=out)
     def sum_and_product(a, b):
         r1 = yield f'python -c "print({a} + {b})"'
@@ -135,3 +138,19 @@ def test_decorate_genfunc():
 
     assert sum_and_product(1, 2) == 0
     assert out.getvalue().strip().split() == ["3", "2"]
+
+
+def test_popen_kwargs():
+    out = io.StringIO()
+    env = os.environ.copy()
+    env.update({'a': 'b'})
+
+    @cmd2func(
+        out_stream=out,
+        popen_kwargs={'env': env},
+    )
+    def print_env():
+        return 'python -c "import os; print(os.environ[\'a\'])"'
+
+    assert print_env() == 0
+    assert out.getvalue().strip() == "b"

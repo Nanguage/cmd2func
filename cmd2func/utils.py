@@ -9,6 +9,5 @@ class Tee(TextIOBase):
 
     def write(self, s: str) -> int:
         ret1 = self.file1.write(s)
-        ret2 = self.file2.write(s)
-        assert ret1 == ret2
+        self.file2.write(s)
         return ret1

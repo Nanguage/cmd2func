@@ -67,7 +67,8 @@ class Cmd2Func(object):
             config: T.Optional[CLIConfig] = None,
             print_cmd=True,
             out_stream=sys.stdout,
-            err_stream=sys.stderr,):
+            err_stream=sys.stderr,
+            popen_kwargs: T.Optional[dict] = None,):
         self.get_cmd_str: T.Union[StrFunc, StrGenFunc]
         if isinstance(cmd_or_func, str):
             self.formater = CommandFormater(cmd_or_func, config)
@@ -80,11 +81,12 @@ class Cmd2Func(object):
         self.is_print_cmd = print_cmd
         self.out_stream = out_stream
         self.err_stream = err_stream
+        self.kwargs_popen = popen_kwargs or dict()
 
     def run_cmd(self, cmd_str: str) -> int:
         """Run the command and return the return code."""
         runner = ProcessRunner(cmd_str)
-        runner.run()
+        runner.run(**self.kwargs_popen)
         ret_code = runner.write_stream_until_stop(
             self.out_stream, self.err_stream)
         return ret_code
@@ -115,13 +117,16 @@ def cmd2func(
         print_cmd=True,
         out_stream=sys.stdout,
         err_stream=sys.stderr,
+        popen_kwargs: T.Optional[dict] = None,
         ) -> Cmd2Func:
     """Convert a command string to a function."""
     if cmd_or_func is None:
         return functools.partial(  # type: ignore
             cmd2func, config=config, print_cmd=print_cmd,
-            out_stream=out_stream, err_stream=err_stream)
+            out_stream=out_stream, err_stream=err_stream,
+            popen_kwargs=popen_kwargs)
     else:
         return Cmd2Func(
-            cmd_or_func, config, print_cmd, out_stream, err_stream
+            cmd_or_func, config, print_cmd, out_stream, err_stream,
+            popen_kwargs
         )

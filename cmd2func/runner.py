@@ -10,14 +10,19 @@ class ProcessRunner(object):
     def __init__(self, command: str) -> None:
         self.command = command
         self.queue: Queue[T.Tuple[T.IO[bytes], bytes]] = Queue(0)
-        self.proc = None
-        self.t_stdout = None
-        self.t_stderr = None
+        self.proc: T.Optional[subp.Popen] = None
+        self.t_stdout: T.Optional[Thread] = None
+        self.t_stderr: T.Optional[Thread] = None
 
-    def run(self):
+    def run(self, **kwargs: T.Any):
+        """Run the command using subprocess.Popen.
+
+        Args:
+            **kwargs: keyword arguments for subprocess.Popen
+        """
         exe = shlex.split(self.command)
-        self.proc = subp.Popen(exe, stdout=subp.PIPE, stderr=subp.PIPE)
-        self.proc.stdout
+        self.proc = subp.Popen(
+            exe, stdout=subp.PIPE, stderr=subp.PIPE, **kwargs)
         self.t_stdout = Thread(
             target=self.reader_func, args=(self.proc.stdout, self.queue))
         self.t_stdout.start()
