@@ -19,13 +19,20 @@ def get_version():
         raise IOError("Version information can not found.")
 
 
-def get_install_requirements():
-    requirements = [
-        "funcdesc>=0.1.2",
-        "typing_extensions",
-        "pyYAML",
-    ]
+def get_requirements_from_file(filename):
+    requirements = []
+    with open(filename) as f:
+        for line in f.readlines():
+            line = line.strip()
+            if len(line) == 0:
+                continue
+            if line and not line.startswith('#'):
+                requirements.append(line)
     return requirements
+
+
+def get_install_requires():
+    return get_requirements_from_file('requirements.txt')
 
 
 requires_test = ['pytest', 'pytest-cov', 'flake8', 'mypy']
@@ -48,7 +55,7 @@ setup(
         'Programming Language :: Python :: 3.10',
     ],
     description="Convert command to callable Python object.",
-    install_requires=get_install_requirements(),
+    install_requires=get_install_requires(),
     license="MIT license",
     long_description=get_long_description(),
     include_package_data=True,

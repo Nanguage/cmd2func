@@ -179,3 +179,24 @@ func = cmd2func("python -c 'print({a} + {b})'", out_stream=t)
 func(1, 2)  # will print "3"
 assert out.getvalue().strip() == "3"
 ```
+
+#### Steamable command line runner
+
+`cmd2func.runner.ProcessRunner` is a streamable command line runner, which can be used to run command line in a streaming way.
+
+```Python
+from cmd2func.runner import ProcessRunner
+
+# run command line and print the output line by line
+runner = ProcessRunner("python -c 'print(1 + 2)'")
+for (src, line) in runner.steam:
+    if src == 'stdout':
+        print(line)
+
+# run command line and capture the output and error
+from io import StringIO
+runner = ProcessRunner("python -c 'print(1 + 2)'")
+out, err = StringIO(), StringIO()
+runner.write_stream_until_stop(out, err)
+print(out.getvalue().strip())  # will print '3'
+```
