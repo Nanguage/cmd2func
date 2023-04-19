@@ -68,7 +68,30 @@ class Cmd2Func(object):
             print_cmd=True,
             out_stream=sys.stdout,
             err_stream=sys.stderr,
+            conda_env: T.Optional[str] = None,
             popen_kwargs: T.Optional[dict] = None,):
+        """Convert a command to a function.
+
+        Args:
+            cmd_or_func: The command string or a function that returns the
+                command string or a generator that yields the command string.
+            config: The config of the command. If not provided, it will be
+                inferred from the command string. This is only used when
+                cmd_or_func is a command string. default: None.
+            print_cmd: Whether to print the command string before running it.
+                default: True.
+            out_stream: The stream to print the output of the command.
+                default: sys.stdout.
+            err_stream: The stream to print the error of the command.
+                default: sys.stderr.
+            conda_env: The conda environment to run the command.
+                default: None.
+            popen_kwargs: The keyword arguments for subprocess.Popen.
+                default: None.
+
+        Attributes:
+            lastest_cmd_str: The lastest command string that is run.
+        """
         self.get_cmd_str: T.Union[StrFunc, StrGenFunc]
         if isinstance(cmd_or_func, str):
             self.formater = CommandFormater(cmd_or_func, config)
@@ -81,10 +104,22 @@ class Cmd2Func(object):
         self.is_print_cmd = print_cmd
         self.out_stream = out_stream
         self.err_stream = err_stream
+        self.conda_env = conda_env
         self.kwargs_popen = popen_kwargs or dict()
+        self.lastest_cmd_str: T.Optional[str] = None
+
+    def process_cmd_str(self, cmd_str: str) -> str:
+        if self.conda_env is not None:  # pragma: no cover
+            cmd_str = "conda run --no-capture-output" + \
+                f"-n {self.conda_env} {cmd_str}"
+        return cmd_str
 
     def run_cmd(self, cmd_str: str) -> int:
         """Run the command and return the return code."""
+        cmd_str = self.process_cmd_str(cmd_str)
+        self.lastest_cmd_str = cmd_str
+        if self.is_print_cmd:
+            print(f"Run command: {cmd_str}")
         runner = ProcessRunner(cmd_str)
         runner.run(**self.kwargs_popen)
         ret_code = runner.write_stream_until_stop(
@@ -104,8 +139,6 @@ class Cmd2Func(object):
         cmd_or_gen = self.get_cmd_str(*args, **kwargs)
         if isinstance(cmd_or_gen, str):
             cmd_str = cmd_or_gen
-            if self.is_print_cmd:
-                print(f"Run command: {cmd_str}")
             return self.run_cmd(cmd_str)
         else:
             return self.iter_and_run(cmd_or_gen)
@@ -117,16 +150,19 @@ def cmd2func(
         print_cmd=True,
         out_stream=sys.stdout,
         err_stream=sys.stderr,
+        conda_env: T.Optional[str] = None,
         popen_kwargs: T.Optional[dict] = None,
         ) -> Cmd2Func:
-    """Convert a command string to a function."""
     if cmd_or_func is None:
         return functools.partial(  # type: ignore
             cmd2func, config=config, print_cmd=print_cmd,
             out_stream=out_stream, err_stream=err_stream,
-            popen_kwargs=popen_kwargs)
+            conda_env=conda_env, popen_kwargs=popen_kwargs)
     else:
         return Cmd2Func(
             cmd_or_func, config, print_cmd, out_stream, err_stream,
-            popen_kwargs
+            conda_env, popen_kwargs
         )
+
+
+cmd2func.__doc__ = Cmd2Func.__init__.__doc__
