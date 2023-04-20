@@ -109,8 +109,8 @@ class Cmd2Func(object):
         self.lastest_cmd_str: T.Optional[str] = None
 
     def process_cmd_str(self, cmd_str: str) -> str:
-        if self.conda_env is not None:  # pragma: no cover
-            cmd_str = "conda run --no-capture-output" + \
+        if self.conda_env is not None:
+            cmd_str = "conda run --no-capture-output " + \
                 f"-n {self.conda_env} {cmd_str}"
         return cmd_str
 

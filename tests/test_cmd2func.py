@@ -154,3 +154,15 @@ def test_popen_kwargs():
 
     assert print_env() == 0
     assert out.getvalue().strip() == "b"
+
+
+def test_conda_env():
+    cmd = "python -c 'print(1)'"
+
+    @cmd2func(conda_env="test")
+    def test1():
+        return cmd
+
+    new_cmd = test1.process_cmd_str(cmd)
+    assert new_cmd.startswith(
+        "conda run --no-capture-output -n test")
