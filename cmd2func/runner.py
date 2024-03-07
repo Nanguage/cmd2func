@@ -14,21 +14,29 @@ class ProcessRunner(object):
         self.t_stdout: T.Optional[Thread] = None
         self.t_stderr: T.Optional[Thread] = None
 
-    def run(self, **kwargs: T.Any):
+    def run(
+            self,
+            capture_stdout: bool = True,
+            capture_stderr: bool = True,
+            **kwargs: T.Any):
         """Run the command using subprocess.Popen.
 
         Args:
+            capture_stdout: If True, capture stdout.
+            capture_stderr: If True, capture stderr.
             **kwargs: keyword arguments for subprocess.Popen
         """
         exe = shlex.split(self.command)
         self.proc = subp.Popen(
             exe, stdout=subp.PIPE, stderr=subp.PIPE, **kwargs)
-        self.t_stdout = Thread(
-            target=self.reader_func, args=(self.proc.stdout, self.queue))
-        self.t_stdout.start()
-        self.t_stderr = Thread(
-            target=self.reader_func, args=(self.proc.stderr, self.queue))
-        self.t_stderr.start()
+        if capture_stdout:
+            self.t_stdout = Thread(
+                target=self.reader_func, args=(self.proc.stdout, self.queue))
+            self.t_stdout.start()
+        if capture_stderr:
+            self.t_stderr = Thread(
+                target=self.reader_func, args=(self.proc.stderr, self.queue))
+            self.t_stderr.start()
 
     @staticmethod
     def reader_func(pipe: T.IO[bytes], queue: "Queue"):
@@ -42,7 +50,12 @@ class ProcessRunner(object):
 
     def stream(self):
         """https://stackoverflow.com/a/31867499/8500469"""
-        for _ in range(2):
+        num_end_signals = 0
+        if self.t_stdout is not None:
+            num_end_signals += 1
+        if self.t_stderr is not None:
+            num_end_signals += 1
+        for _ in range(num_end_signals):
             for source, line in iter(self.queue.get, None):
                 if source is self.proc.stdout:
                     src = "stdout"
@@ -63,7 +76,7 @@ class ProcessRunner(object):
                 src, line = next(g)
                 if src == 'stdout':
                     out_file.write(line)
-                else:
+                elif src == 'stderr':
                     err_file.write(line)
             except StopIteration as e:
                 retcode = e.value
