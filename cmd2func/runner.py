@@ -27,8 +27,10 @@ class ProcessRunner(object):
             **kwargs: keyword arguments for subprocess.Popen
         """
         exe = shlex.split(self.command)
+        sout = subp.PIPE if capture_stdout else None
+        serr = subp.PIPE if capture_stderr else None
         self.proc = subp.Popen(
-            exe, stdout=subp.PIPE, stderr=subp.PIPE, **kwargs)
+            exe, stdout=sout, stderr=serr, **kwargs)
         if capture_stdout:
             self.t_stdout = Thread(
                 target=self.reader_func, args=(self.proc.stdout, self.queue))
