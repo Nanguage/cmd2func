@@ -18,19 +18,25 @@ class ProcessRunner(object):
             self,
             capture_stdout: bool = True,
             capture_stderr: bool = True,
+            shell: bool = False,
             **kwargs: T.Any):
         """Run the command using subprocess.Popen.
 
         Args:
             capture_stdout: If True, capture stdout.
             capture_stderr: If True, capture stderr.
-            **kwargs: keyword arguments for subprocess.Popen
+            shell: If True, run the command using the shell.
+            **kwargs: other keyword arguments for subprocess.Popen
         """
-        exe = shlex.split(self.command)
+        exe: T.Union[str, T.List[str]]
+        if shell:
+            exe = self.command
+        else:
+            exe = shlex.split(self.command)
         sout = subp.PIPE if capture_stdout else None
         serr = subp.PIPE if capture_stderr else None
         self.proc = subp.Popen(
-            exe, stdout=sout, stderr=serr, **kwargs)
+            exe, stdout=sout, stderr=serr, shell=shell, **kwargs)
         if capture_stdout:
             self.t_stdout = Thread(
                 target=self.reader_func, args=(self.proc.stdout, self.queue))
