@@ -39,19 +39,22 @@ class ProcessRunner(object):
             exe, stdout=sout, stderr=serr, shell=shell, **kwargs)
         if capture_stdout:
             self.t_stdout = Thread(
-                target=self.reader_func, args=(self.proc.stdout, self.queue))
+                target=self.reader_func,
+                args=(self.proc.stdout, "stdout", self.queue))
             self.t_stdout.start()
         if capture_stderr:
             self.t_stderr = Thread(
-                target=self.reader_func, args=(self.proc.stderr, self.queue))
+                target=self.reader_func,
+                args=(self.proc.stderr, "stderr", self.queue))
             self.t_stderr.start()
 
     @staticmethod
-    def reader_func(pipe: T.IO[bytes], queue: "Queue"):
+    def reader_func(pipe: T.IO[bytes], label: str, queue: "Queue"):
         """https://stackoverflow.com/a/31867499/8500469"""
         try:
-            for line in iter(pipe.readline, b''):
-                queue.put((pipe, line))
+            with pipe:
+                for line in iter(pipe.readline, b''):
+                    queue.put((label, line))
         finally:
             queue.put(None)
 
@@ -63,13 +66,7 @@ class ProcessRunner(object):
         if self.t_stderr is not None:
             num_end_signals += 1
         for _ in range(num_end_signals):
-            for source, line in iter(self.queue.get, None):
-                if source is self.proc.stdout:
-                    src = "stdout"
-                elif source is self.proc.stderr:
-                    src = "stderr"
-                else:
-                    raise ValueError("Unknown source")
+            for src, line in iter(self.queue.get, None):
                 line_decoded = line.decode()
                 yield src, line_decoded
         return self.proc.wait()

@@ -15,6 +15,5 @@ def test_process_runner():
 def test_runner_shell():
     runner = ProcessRunner("python -c 'print(1)'")
     runner.run(shell=True)
-    runner.run()
     out = list(runner.stream())
     assert len(out) == 1
