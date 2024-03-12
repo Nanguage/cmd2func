@@ -50,9 +50,8 @@ class ProcessRunner(object):
     def reader_func(pipe: T.IO[bytes], queue: "Queue"):
         """https://stackoverflow.com/a/31867499/8500469"""
         try:
-            with pipe:
-                for line in iter(pipe.readline, b''):
-                    queue.put((pipe, line))
+            for line in iter(pipe.readline, b''):
+                queue.put((pipe, line))
         finally:
             queue.put(None)
 
@@ -67,8 +66,10 @@ class ProcessRunner(object):
             for source, line in iter(self.queue.get, None):
                 if source is self.proc.stdout:
                     src = "stdout"
-                else:
+                elif source is self.proc.stderr:
                     src = "stderr"
+                else:
+                    raise ValueError("Unknown source")
                 line_decoded = line.decode()
                 yield src, line_decoded
         return self.proc.wait()

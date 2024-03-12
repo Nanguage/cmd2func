@@ -10,6 +10,9 @@ def test_process_runner():
     runner.run(capture_stdout=False)  # Don't capture stdout
     out = list(runner.stream())
     assert len(out) == 0
+
+
+def test_runner_shell():
     runner = ProcessRunner("python -c 'print(1)'")
     runner.run(shell=True)
     runner.run()
