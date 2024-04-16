@@ -69,6 +69,7 @@ class Cmd2Func(object):
             out_stream=sys.stdout,
             err_stream=sys.stderr,
             conda_env: T.Optional[str] = None,
+            flush_streams_each_time=False,
             popen_kwargs: T.Optional[dict] = None,):
         """Convert a command to a function.
 
@@ -86,6 +87,8 @@ class Cmd2Func(object):
                 default: sys.stderr.
             conda_env: The conda environment to run the command.
                 default: None.
+            flush_streams_each_time: Whether to flush the streams each time
+                after writing to them. default: False.
             popen_kwargs: The keyword arguments for subprocess.Popen.
                 default: None.
 
@@ -105,6 +108,7 @@ class Cmd2Func(object):
         self.out_stream = out_stream
         self.err_stream = err_stream
         self.conda_env = conda_env
+        self.flush_streams_each_time = flush_streams_each_time
         self.kwargs_popen = popen_kwargs or dict()
         self.lastest_cmd_str: T.Optional[str] = None
 
@@ -123,7 +127,8 @@ class Cmd2Func(object):
         runner = ProcessRunner(cmd_str)
         runner.run(**self.kwargs_popen)
         ret_code = runner.write_stream_until_stop(
-            self.out_stream, self.err_stream)
+            self.out_stream, self.err_stream,
+            self.flush_streams_each_time)
         return ret_code
 
     def iter_and_run(self, generator: CmdGen) -> T.Any:
@@ -151,17 +156,20 @@ def cmd2func(
         out_stream=sys.stdout,
         err_stream=sys.stderr,
         conda_env: T.Optional[str] = None,
+        flush_streams_each_time=False,
         popen_kwargs: T.Optional[dict] = None,
         ) -> Cmd2Func:
     if cmd_or_func is None:
         return functools.partial(  # type: ignore
             cmd2func, config=config, print_cmd=print_cmd,
             out_stream=out_stream, err_stream=err_stream,
-            conda_env=conda_env, popen_kwargs=popen_kwargs)
+            conda_env=conda_env,
+            flush_streams_each_time=flush_streams_each_time,
+            popen_kwargs=popen_kwargs)
     else:
         return Cmd2Func(
             cmd_or_func, config, print_cmd, out_stream, err_stream,
-            conda_env, popen_kwargs
+            conda_env, flush_streams_each_time, popen_kwargs
         )
 
 

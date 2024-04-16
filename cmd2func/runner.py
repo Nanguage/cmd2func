@@ -74,16 +74,22 @@ class ProcessRunner(object):
     def write_stream_until_stop(
             self,
             out_file: T.TextIO,
-            err_file: T.TextIO) -> int:
+            err_file: T.TextIO,
+            flush_streams_each_time: bool = False,
+            ) -> int:
         g = self.stream()
         retcode = None
         while True:
             try:
                 src, line = next(g)
                 if src == 'stdout':
-                    out_file.write(line)
-                elif src == 'stderr':
-                    err_file.write(line)
+                    ofile = out_file
+                else:
+                    assert src == 'stderr'
+                    ofile = err_file
+                ofile.write(line)
+                if flush_streams_each_time:
+                    ofile.flush()
             except StopIteration as e:
                 retcode = e.value
                 break

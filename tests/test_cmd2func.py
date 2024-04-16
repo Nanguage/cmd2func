@@ -166,3 +166,17 @@ def test_conda_env():
     new_cmd = test1.process_cmd_str(cmd)
     assert new_cmd.startswith(
         "conda run --no-capture-output -n test")
+
+
+def test_flush_streams_each_time():
+    out = io.StringIO()
+
+    @cmd2func(
+        out_stream=out,
+        flush_streams_each_time=True,
+    )
+    def test1():
+        return "python -c 'print(1)'"
+
+    test1()
+    assert out.getvalue().strip() == "1"
